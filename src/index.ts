@@ -24,17 +24,16 @@ export function main() {
             console.log(`Running module: ${module}`);
         });
 
-    const create = program.command('create').description('Create modules or packs');
-    create
-        .command('module <name>')
+    program
+        .command('new module <name>')
         .description('Create a new .devmod module')
         .action((name: string) => {
             // TODO: Create module implementation
             console.log(`Creating module: ${name}`);
         });
 
-    create
-        .command('pack <name>')
+    program
+        .command('new pack <name>')
         .description('Create a new .devpack pack')
         .action((name: string) => {
             // TODO: Create pack implementation
