@@ -1,79 +1,53 @@
-# brylo-cli Technical Documentation
+# Brylo CLI Architecture
 
-## Architecture Overview
-
-- **src/**: Contains all the main TypeScript source code. Organize features, commands, and utilities here.
-- **bin/**: Contains the CLI entry point (`index.js`). This file imports the compiled code from `dist` and launches the CLI. It uses a shebang for direct execution.
-- **test/**: Contains unit tests (Jest). All new features should be covered by tests.
-- **docs/**: Documentation and guides.
-- **.github/**: Community health files (issue/PR templates).
-
-### Build & Execution Flow
+## Folder Structure
 
 ```
-[TypeScript code in src/] --(npm run build)--> [Compiled JS in dist/]
-[bin/index.js] --(node bin/index.js)--> [Calls dist/index.js]
+├── bin/              # Global CLI entry point (brylo.js)
+├── src/              # TypeScript source code (interpreter, commands)
+├── test/             # Unit and integration tests
+├── docs/             # Detailed documentation
+├── modules/          # Sample .devmod modules
+├── packs/            # Sample .devpack packs
+├── .github/          # Community files
+├── package.json      # Node.js & CLI config
+├── tsconfig.json     # TypeScript config
+├── .gitignore        # Ignore node_modules, dist, .env
+├── LICENSE           # MIT License
+├── CHANGELOG.md      # Version history
 ```
 
-## CLI Usage
+## Execution Flow
 
-After building:
-
-```sh
-node bin/index.js
-```
-
-Or, if published globally:
-
-```sh
-brylo
-```
-
-## Example: Add a Command
-
-1. Create a new file in `src/commands/` (e.g. `hello.ts`).
-2. Export a function (e.g. `export function hello() { ... }`).
-3. Import and call it from `src/index.ts` based on CLI arguments.
-
-## Contribution Guide
-
-- Fork the repo, clone, and create a feature branch.
-- Write code in `src/`, add/modify tests in `test/`.
-- Ensure all tests pass (`npm test`).
-- Follow commit conventions (see CONTRIBUTING.md).
-- Submit a PR with a clear description.
-
-## Schematics
-
-```
-Project Root
-├── src/
-│   └── index.ts
-├── bin/
-│   └── index.js
-├── test/
-│   └── cli.test.ts
-├── docs/
-│   └── husky.md
-├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   └── PULL_REQUEST_TEMPLATE.md
-├── package.json
-├── tsconfig.json
-├── .gitignore
-├── LICENSE
-```
+1. The user runs a command via the global CLI (`brylo <command>`)
+2. The CLI parses arguments and calls the interpreter engine
+3. The engine reads `.devmod` or `.devpack` files and executes instructions
+4. User responses, logs, and results are displayed in real time
 
 ## Extending the CLI
 
-- Add new commands in `src/commands/`.
-- Use libraries like `commander` or `yargs` for argument parsing (recommended for future scalability).
-- Document every new feature in the README and docs.
+- Add a command: create a file in `src/commands/`, export it and import in `src/index.ts`
+- Use a CLI framework (`commander`, `yargs`) for scalability
+- Document every new command in the README and docs
 
-## Maintainers
+## Interpreter Engine
 
-- See CODE_OF_CONDUCT.md for contact and reporting guidelines.
+- Line-by-line reading of `.devmod` files
+- Executes instructions: log, ask, if, function, call, install
+- Supports interactive questions (inquirer)
+- Handles internal functions and conditions
+
+## Tests
+
+- All new features must be covered by tests in `test/`
+- Use Jest for unit and integration tests
+
+## Contribution
+
+- Fork, dedicated branch, PR with clear description
+- Follow commit conventions and quality workflow
 
 ---
 
-For more details, see README.md and CONTRIBUTING.md.
+For user configuration, see [docs/config.md](docs/config.md).
+For module/pack formats, see [docs/modules.md](docs/modules.md) and [docs/packs.md](docs/packs.md).

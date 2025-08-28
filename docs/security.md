@@ -1,20 +1,26 @@
 # Security & Dependency Management
 
-## Automated Security Checks
+Brylo CLI project security relies on automation, monitoring, and open source best practices.
 
-- **Dependabot**: Automatically creates pull requests to update dependencies and fix vulnerabilities. Enabled via GitHub configuration.
-- **npm audit**: Run `npm audit` regularly to check for known vulnerabilities in dependencies.
-- **Semantic Release**: Ensures releases are based on tested, up-to-date code.
+## Automation
 
-## Recommended Practices
+- **Dependabot**: automatic PRs for updates and vulnerabilities
+- **npm audit**: regular dependency checks
+- **Semantic Release**: releases on tested, up-to-date code
 
-- Keep dependencies up to date (use Dependabot or renovate).
-- Review and merge Dependabot PRs promptly.
-- Run `npm audit` before every release or major merge.
-- Use only trusted libraries and check for recent maintenance.
-- Monitor GitHub security alerts for the repository.
+## Best Practices
 
-## Example: Manual Audit
+- Keep dependencies up to date (Dependabot, Renovate)
+- Review and merge security PRs quickly
+- Use only maintained libraries
+- Monitor GitHub alerts
+
+## Additional Tools
+
+- [Snyk](https://snyk.io/): advanced scanning
+- [Renovate](https://github.com/renovatebot/renovate): updates
+
+## Manual Audit Example
 
 ```sh
 npm audit
@@ -22,7 +28,7 @@ npm audit
 
 ## Example: Enable Dependabot
 
-Create `.github/dependabot.yml` with:
+Create `.github/dependabot.yml`:
 
 ```yaml
 version: 2
@@ -33,11 +39,6 @@ updates:
           interval: 'weekly'
 ```
 
-## Additional Tools
-
-- [Snyk](https://snyk.io/) for advanced vulnerability scanning
-- [Renovate](https://github.com/renovatebot/renovate) for dependency updates
-
 ---
 
-For more details, see [npm audit documentation](https://docs.npmjs.com/cli/v10/commands/npm-audit).
+For more details, see the [npm audit documentation](https://docs.npmjs.com/cli/v10/commands/npm-audit).
