@@ -1,0 +1,22 @@
+npx lint-staged
+
+npm run lint
+npm run format
+npx lint-staged
+
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ]; then
+	echo "You are committing to main. Are you sure? (y/N)"
+	read ans
+	if [ "$ans" != "y" ]; then
+		echo "Commit aborted."
+		exit 1
+	fi
+else
+	npm run lint
+	npm run format
+	npx lint-staged
+fi

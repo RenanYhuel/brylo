@@ -1,0 +1,15 @@
+node_modules/
+dist/
+test/
+docs/
+.github/
+.gitignore
+.vscode/
+.idea/
+*.swp
+*.tsbuildinfo
+coverage/
+.husky/_
+CHANGELOG.md
+LICENSE
+husky.md
