@@ -27,10 +27,10 @@ Create `.github/dependabot.yml` with:
 ```yaml
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
-    schedule:
-      interval: 'weekly'
+    - package-ecosystem: 'npm'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
 ```
 
 ## Additional Tools

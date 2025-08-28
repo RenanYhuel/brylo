@@ -1,3 +1,3 @@
 export function main() {
-  console.log('Welcome to brylo-cli!');
+    console.log('Welcome to brylo-cli!');
 }
