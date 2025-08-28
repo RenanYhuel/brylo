@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 
-export function main() {
+export function main(argv?: string[]) {
     const program = new Command();
 
     program
@@ -24,37 +24,37 @@ export function main() {
             console.log(`Running module: ${module}`);
         });
 
-    program
-        .command('new module <name>')
+    const newCmd = program.command('new').description('Create modules or packs');
+    newCmd
+        .command('module <name>')
         .description('Create a new .devmod module')
         .action((name: string) => {
             // TODO: Create module implementation
             console.log(`Creating module: ${name}`);
         });
 
-    program
-        .command('new pack <name>')
+    newCmd
+        .command('pack <name>')
         .description('Create a new .devpack pack')
         .action((name: string) => {
             // TODO: Create pack implementation
             console.log(`Creating pack: ${name}`);
         });
 
-    program
-        .command('edit module <name>')
+    const edit = program.command('edit').description('Edit modules or packs');
+    edit.command('module <name>')
         .description('Open a module for editing')
         .action((name: string) => {
             // TODO: Edit module implementation
             console.log(`Editing module: ${name}`);
         });
 
-    program
-        .command('edit pack <name>')
+    edit.command('pack <name>')
         .description('Open a pack for editing')
         .action((name: string) => {
             // TODO: Edit pack implementation
             console.log(`Editing pack: ${name}`);
         });
 
-    program.parse(process.argv);
+    program.parse(argv || process.argv);
 }
