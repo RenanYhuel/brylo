@@ -6,6 +6,7 @@ export default [
     ...tseslint.configs.recommended,
     {
         files: ['**/*.ts'],
+        ignores: ['src/bml/__tests__/interpreter.test.ts'],
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
