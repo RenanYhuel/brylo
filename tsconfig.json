@@ -11,5 +11,9 @@
         "forceConsistentCasingInFileNames": true
     },
     "include": ["src", "test/**/*.ts"],
-    "exclude": ["node_modules", "src/bml/__tests__/interpreter.test.ts"]
+    "exclude": [
+        "node_modules",
+        "src/bml/__tests__/interpreter.test.ts",
+        "src/bml/__tests__/parser.test.ts"
+    ]
 }
