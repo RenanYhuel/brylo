@@ -1,46 +1,23 @@
-# `.devmod` Modules
+# Brylo Modules (`.bml`)
 
-## Format
+Brylo modules are written using the `.bml` extension and follow the Brylo Module Language (BML) specification.
 
-A `.devmod` module is a text file containing instructions interpretable by Brylo.
+## What is a Brylo Module?
 
-### Basic Instructions
+A Brylo module is a file that describes an automation workflow, interactive process, or task sequence for the Brylo CLI. Modules are the core unit for defining logic and user interaction.
 
-- `log: "text"` : display a message
-- `ask: <id>` : ask a question to the user
-- `question: "text"` : question text (after ask)
-- `if: <id>` / `else:` : simple conditions
-- `function <name>` : define an internal function
-- `call <name>` : execute an internal function
-- `exec: <command>` : run a generic system command (use with caution)
+## Syntax and Features
 
-> **Warning:** Use `exec:` for shell/system commands. Avoid dangerous or destructive commands.
+All syntax, instructions, advanced features, and best practices for writing modules are described in detail in the [Brylo Module Language Documentation](./bml-language.md).
 
-### Full Example
+## Getting Started
 
-```
-log: "Welcome to the TagWin module!"
-ask: enableAutoTag
-question: "Do you want to enable auto-tag? (y/n)"
-if: enableAutoTag
-  log: "Auto-tag enabled"
-else:
-  log: "Auto-tag disabled"
-function exampleFunc
-  log: "This is an internal function"
-call exampleFunc
-exec: echo "Module finished"
-```
+To create a module:
 
-## Best Practices
+1. Create a file with the `.bml` extension.
+2. Write your module using the BML syntax.
+3. Refer to the [BML documentation](./bml-language.md) for examples and guidance.
 
-- Use clear identifiers for questions and conditions
-- Group internal functions at the end of the module
-- Document each module with a header comment
-- Validate the module before execution (syntax, instructions)
-- Use `exec:` for generic commands, but avoid dangerous operations
+## Example
 
-## Going Further
-
-- Support for variables, loops, imports (roadmap V2)
-- Marketplace, module sharing (roadmap V2)
+See the [BML documentation](./bml-language.md) for full examples and advanced usage.

@@ -1,15 +1,19 @@
-# `.devpack` Packs
+# Brylo Packs (`.bpack`)
 
 ## Format
 
-A `.devpack` pack is a JSON file listing `.devmod` modules to be executed sequentially.
+A Brylo pack is a JSON file (recommended extension: `.bpack`) listing `.bml` modules to be executed sequentially.
+
+> **Note:** For module syntax and advanced features, refer to the [Brylo Module Language Documentation](./bml-language.md).
+
+Packs are collections of Brylo modules that define a complete workflow or automation pipeline. Each module in the pack must use the `.bml` extension and follow the BML syntax and conventions. Packs allow you to organize and execute multiple modules in sequence, making complex automation easy to manage.
 
 ### Example
 
 ```json
 {
     "name": "react-tagwin-chat-cn",
-    "modules": ["tagwin.devmod", "react-setup.devmod", "chat-cn.devmod"]
+    "modules": ["tagwin.bml", "react-setup.bml", "chat-cn.bml"]
 }
 ```
 
