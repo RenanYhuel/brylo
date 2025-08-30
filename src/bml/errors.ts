@@ -6,7 +6,8 @@ export type BmlErrorType =
     | 'RunBlock'
     | 'Instruction'
     | 'Syntax'
-    | 'Tokenization';
+    | 'Tokenization'
+    | 'TypeError';
 
 export interface BmlErrorContext {
     line: number;

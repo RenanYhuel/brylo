@@ -1,0 +1,5 @@
+module "type-missing" {
+    run {
+        set: x = 5
+    }
+}

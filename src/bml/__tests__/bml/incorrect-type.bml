@@ -1,0 +1,7 @@
+module "incorrect-type" {
+    run {
+        set: x:string = 5
+        set: y:number = "hello"
+        set: z:bool = "notabool"
+    }
+}

@@ -19,6 +19,7 @@ import { BmlParseError } from './errors';
  */
 export interface InterpreterContext {
     variables: Record<string, BmlValue>;
+    variableTypes: Record<string, string>;
     logs: string[];
     functions: Record<string, BmlFunction>;
     imports: string[];
@@ -29,6 +30,7 @@ export interface InterpreterContext {
 function createDefaultContext(metadata?: Record<string, BmlValue>): InterpreterContext {
     return {
         variables: {},
+        variableTypes: {},
         logs: [],
         functions: {},
         imports: [],
@@ -128,7 +130,19 @@ function executeAsk(instr: BmlAsk, ctx: InterpreterContext): void {
     let value: BmlValue = instr.default ?? '';
     if (instr.valueType === 'number' && typeof value !== 'number') value = Number(value) || 0;
     if (instr.valueType === 'bool' && typeof value !== 'boolean') value = value === 'true';
+    // Typage strict
+    const expectedType = instr.valueType ?? typeof value;
+    if (typeof value !== expectedType && !(expectedType === 'bool' && typeof value === 'boolean')) {
+        ctx.errors.push(
+            new BmlParseError(
+                'TypeError',
+                `Type mismatch for variable ${instr.variable}: expected ${expectedType}, got ${typeof value}`,
+                { line: 0 },
+            ),
+        );
+    }
     ctx.variables[instr.variable] = value;
+    ctx.variableTypes[instr.variable] = expectedType;
     ctx.logs.push(`Asked: ${question} -> ${value}`);
 }
 
@@ -139,7 +153,22 @@ function executeSet(instr: BmlSet, ctx: InterpreterContext): void {
             line: 0,
         });
     }
+    // Typage strict
+    const expectedType = instr.valueType;
+    let actualType: string = typeof instr.value;
+    if (Array.isArray(instr.value)) actualType = 'list';
+    else if (actualType === 'object') actualType = 'object';
+    if (expectedType !== actualType && !(expectedType === 'bool' && actualType === 'boolean')) {
+        ctx.errors.push(
+            new BmlParseError(
+                'TypeError',
+                `Type mismatch for variable ${instr.variable}: expected ${expectedType}, got ${actualType}`,
+                { line: 0 },
+            ),
+        );
+    }
     ctx.variables[instr.variable] = instr.value;
+    ctx.variableTypes[instr.variable] = expectedType;
     ctx.logs.push(`Set: ${instr.variable} = ${JSON.stringify(instr.value)}`);
 }
 
@@ -208,21 +237,47 @@ function executeFor(instr: BmlFor, ctx: InterpreterContext): void {
             }
         }
     }
-    ctx.logs.push(`For loop: ${instr.variable} in ${instr.iterable}`);
+    // Ne logge plus le for loop ici, les logs sont générés par les instructions internes
 }
 
 function executeIf(instr: BmlIf, ctx: InterpreterContext): void {
-    // Interpolate condition if needed
+    // Évalue la condition : supporte les expressions simples (==, !=, >, <, >=, <=)
     let cond = false;
-    const condStr =
-        typeof instr.condition === 'string'
-            ? interpolate(
-                  instr.condition,
-                  ctx.variables as Record<string, string | number | boolean>,
-              )
-            : instr.condition;
-    if (condStr in ctx.variables) {
-        cond = Boolean(ctx.variables[condStr]);
+    const condStr = instr.condition.trim();
+    // Expression regex: x > 3, x == 2, etc
+    const exprMatch = condStr.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*(==|!=|>=|<=|>|<)\s*(.+)$/);
+    if (exprMatch) {
+        const left = exprMatch[1];
+        const op = exprMatch[2];
+        let right: string | number | boolean = exprMatch[3];
+        const leftVal = ctx.variables[left];
+        // Try to parse right as number or boolean
+        if (right === 'true') right = true;
+        else if (right === 'false') right = false;
+        else if (!isNaN(Number(right))) right = Number(right);
+        // Compare
+        switch (op) {
+            case '==':
+                cond = leftVal == right;
+                break;
+            case '!=':
+                cond = leftVal != right;
+                break;
+            case '>':
+                cond = leftVal > right;
+                break;
+            case '<':
+                cond = leftVal < right;
+                break;
+            case '>=':
+                cond = leftVal >= right;
+                break;
+            case '<=':
+                cond = leftVal <= right;
+                break;
+        }
+    } else if (condStr in ctx.variables) {
+        cond = ctx.variables[condStr] === true || ctx.variables[condStr] === 'true';
     } else if (condStr === 'true') {
         cond = true;
     } else if (condStr === 'false') {
@@ -233,14 +288,10 @@ function executeIf(instr: BmlIf, ctx: InterpreterContext): void {
             for (const inner of instr.then) {
                 executeInstruction(inner, ctx);
             }
-            ctx.logs.push(`If: ${condStr} -> then`);
         } else if (instr.else) {
             for (const inner of instr.else) {
                 executeInstruction(inner, ctx);
             }
-            ctx.logs.push(`If: ${condStr} -> else`);
-        } else {
-            ctx.logs.push(`If: ${condStr} -> skipped`);
         }
     } catch (err) {
         if (err instanceof BmlParseError) {

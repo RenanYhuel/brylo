@@ -39,14 +39,14 @@ module "example-module" {
             default: false
         }
 
-        set: userName = "anonymous"
+    set: userName:string = "anonymous"
         ask: userName {
             question: "What is your name?"
             type: "string"
             default: "anonymous"
         }
 
-        set: items = ["alpha", "beta", "gamma"]
+    set: items:list = ["alpha", "beta", "gamma"]
 
         if: enableAutoTag {
             log: "Auto-tag enabled for ${userName}"
@@ -102,6 +102,38 @@ if: variableName {
 }
 ```
 
+**Note V1**: Only boolean variables or literals (`true`/`false`) are supported in conditions. Expressions like `x > 3` are not yet available.
+
+### 4.4 set
+
+Assigns a value to a variable with strict and mandatory typing.
+
+**Note:** The syntax for assignment is strictly:
+
+```
+set: variableName:type = value
+```
+
+Where `type` must be one of:
+
+- string
+- number
+- bool
+- object
+- list
+
+Any other type (e.g. `boolean`, `int`, etc.) will result in a syntax error.
+
+Examples:
+
+```
+set: x:number = 5
+set: name:string = "Brylo"
+set: items:list = ["a", "b", "c"]
+set: flag:bool = true
+set: config:object = { key: "value" }
+```
+
 ### 4.4 function / call
 
 Definition and call of internal functions.
@@ -127,26 +159,16 @@ exec: "echo Hello World"
 - number: 42
 - bool: true/false
 - list: ["a", "b", "c"]
-- object: { ... }
 
 ## 6. Variables and Expressions
 
 - Variables are created by `ask` or by assignment
 - Usage in instructions: `${variable}`
-- Supported expressions: equality, booleans, simple arithmetic
-
-Example:
-
-```
-set: x = 5
-if: x > 3 {
-    log: "x is big"
-}
-```
+  **Note V1**: Expressions in conditions (`x > 3`) are not yet supported. Use only boolean variables or literals.
 
 ## 7. Loops (V2)
 
-Proposal for V2:
+Supported in V1:
 
 ```
 for: item in items {
@@ -246,7 +268,7 @@ module "build-check" {
 module "multi-echo" {
     description: "Echo multiple items"
     run {
-        set: items = ["a", "b", "c"]
+    set: items:list = ["a", "b", "c"]
         for: item in items {
             exec: "echo ${item}"
         }

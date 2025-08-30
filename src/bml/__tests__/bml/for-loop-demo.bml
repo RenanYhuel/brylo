@@ -1,0 +1,8 @@
+module "demo" {
+run {
+set: items:list = [1,2,3]
+for: item in items {
+log: "Item: ${item}"
+}
+}
+}

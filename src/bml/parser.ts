@@ -45,12 +45,14 @@ function parseMetadata(lines: string[]): BmlMetadata {
         try {
             if (/^\[.*\]$/.test(value)) {
                 value = JSON.parse(value.replace(/'/g, '"'));
+            } else if (/^\{.*\}$/.test(value)) {
+                value = JSON.parse(value.replace(/'/g, '"'));
             } else if (/^(true|false)$/.test(value)) {
                 value = value === 'true';
             } else if (!isNaN(Number(value))) {
                 value = Number(value);
             } else {
-                value = value.replace(/^"|"$/g, '');
+                value = value.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
             }
         } catch (e) {
             const column = line.indexOf(match[2]);
@@ -86,7 +88,7 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
             if (askMatch) {
                 const variable = askMatch[1];
                 let question = '';
-                let valueType: 'string' | 'number' | 'bool' = 'string';
+                let valueType: 'string' | 'number' | 'bool' | undefined = undefined;
                 let defaultValue: BmlValue | undefined = undefined;
                 i++;
                 while (i < lines.length && !lines[i].includes('}')) {
@@ -102,6 +104,13 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
                     }
                     i++;
                 }
+                if (!valueType) {
+                    throw new BmlParseError(
+                        'Syntax',
+                        `Missing type for variable '${variable}' in ask`,
+                        { line: i + 1 },
+                    );
+                }
                 instructions.push({
                     type: 'ask',
                     variable,
@@ -115,23 +124,80 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
         }
         // set
         if (line.startsWith('set:')) {
-            const setMatch = line.match(/^set:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
-            if (setMatch) {
-                const variable = setMatch[1];
-                let value: BmlValue = setMatch[2];
-                if (/^\[.*\]$/.test(value)) {
-                    value = JSON.parse(value.replace(/'/g, '"'));
-                } else if (/^(true|false)$/.test(value)) {
-                    value = value === 'true';
-                } else if (!isNaN(Number(value))) {
-                    value = Number(value);
-                } else {
-                    value = value.replace(/^"|"$/g, '');
-                }
-                instructions.push({ type: 'set', variable, value });
-                i++;
-                continue;
+            // Syntaxe stricte : set: variable:type = value
+            const setMatch = line.match(
+                /^set:\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:(string|number|bool|object|list)\s*=\s*(.+)$/,
+            );
+            if (!setMatch) {
+                throw new BmlParseError(
+                    'Syntax',
+                    `Missing type for variable in set (expected set: variable:type = value)`,
+                    { line: i + 1 },
+                );
             }
+            const variable = setMatch[1];
+            const valueType = setMatch[2];
+            const valueRaw: string = setMatch[3];
+            let value: BmlValue = '';
+            let valid = true;
+            switch (valueType) {
+                case 'string':
+                    // Accept only quoted strings
+                    if (/^".*"$/.test(valueRaw) || /^'.*'$/.test(valueRaw)) {
+                        value = valueRaw.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+                    } else {
+                        valid = false;
+                    }
+                    break;
+                case 'number':
+                    if (!isNaN(Number(valueRaw))) {
+                        value = Number(valueRaw);
+                    } else {
+                        valid = false;
+                    }
+                    break;
+                case 'bool':
+                    if (valueRaw === 'true' || valueRaw === 'false') {
+                        value = valueRaw === 'true';
+                    } else {
+                        valid = false;
+                    }
+                    break;
+                case 'list':
+                    try {
+                        value = JSON.parse(valueRaw.replace(/'/g, '"'));
+                        if (!Array.isArray(value)) valid = false;
+                    } catch {
+                        valid = false;
+                    }
+                    break;
+                case 'object':
+                    try {
+                        value = JSON.parse(valueRaw.replace(/'/g, '"'));
+                        if (typeof value !== 'object' || Array.isArray(value) || value === null)
+                            valid = false;
+                    } catch {
+                        valid = false;
+                    }
+                    break;
+                default:
+                    valid = false;
+            }
+            if (!valid) {
+                throw new BmlParseError(
+                    'TypeError',
+                    `Value '${valueRaw}' does not match type '${valueType}' in set (line ${i + 1})`,
+                    { line: i + 1 },
+                );
+            }
+            instructions.push({
+                type: 'set',
+                variable,
+                value,
+                valueType: valueType as 'string' | 'number' | 'object' | 'bool' | 'list',
+            });
+            i++;
+            continue;
         }
         // exec
         if (line.startsWith('exec:')) {
@@ -142,29 +208,62 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
             i++;
             continue;
         }
-        // call
-        if (line.startsWith('call:')) {
-            instructions.push({ type: 'call', functionName: line.slice(5).trim() });
-            i++;
-            continue;
-        }
-        // function
-        if (line.startsWith('function')) {
-            const funcMatch = line.match(/^function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{/);
-            if (funcMatch) {
-                const name = funcMatch[1];
-                const body: BmlInstruction[] = [];
-                i++;
-                while (i < lines.length && !lines[i].includes('}')) {
-                    // Recursively parse inner instructions
-                    const inner = parseRunBlock([lines[i]]);
-                    body.push(...inner.instructions);
+        // if/else
+        if (line.startsWith('if:')) {
+            const ifMatch = line.match(/^if:\s*(.+?)\s*\{/);
+            if (ifMatch) {
+                const condition = ifMatch[1].trim();
+                i++; // Move past the if line
+                // Collect all remaining lines for this if/else block
+                const blockLines: string[] = [];
+                let braceCount = 1;
+                let elseStartIndex = -1;
+                // Collect all lines until we close the if block
+                while (i < lines.length && braceCount > 0) {
+                    const currentLine = lines[i];
+                    if (currentLine.includes('{')) braceCount++;
+                    if (currentLine.includes('}')) braceCount--;
+                    // Track where else starts (at top level only)
+                    if (
+                        braceCount === 1 &&
+                        (currentLine.trim() === '} else {' || currentLine.trim() === 'else {')
+                    ) {
+                        elseStartIndex = blockLines.length;
+                    }
+                    if (braceCount > 0) blockLines.push(currentLine);
                     i++;
                 }
-                instructions.push({ type: 'function', name, body });
-                i++; // skip closing }
+                // Split into then and else parts
+                let thenLines: string[];
+                let elseLines: string[] = [];
+                if (elseStartIndex >= 0) {
+                    thenLines = blockLines.slice(0, elseStartIndex);
+                    elseLines = blockLines.slice(elseStartIndex + 1); // Skip the '} else {' or 'else {' line
+                } else {
+                    thenLines = blockLines;
+                }
+                const then = parseRunBlock(thenLines).instructions;
+                const elseBlock =
+                    elseLines.length > 0 ? parseRunBlock(elseLines).instructions : undefined;
+                instructions.push({ type: 'if', condition, then, else: elseBlock });
                 continue;
             }
+        }
+        // function
+        const funcMatch = line.match(/^function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\{/);
+        if (funcMatch) {
+            const name = funcMatch[1];
+            const body: BmlInstruction[] = [];
+            i++;
+            while (i < lines.length && !lines[i].includes('}')) {
+                // Recursively parse inner instructions
+                const inner = parseRunBlock([lines[i]]);
+                body.push(...inner.instructions);
+                i++;
+            }
+            instructions.push({ type: 'function', name, body });
+            i++; // skip closing }
+            continue;
         }
         // for
         if (line.startsWith('for:')) {
@@ -174,43 +273,18 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
             if (forMatch) {
                 const variable = forMatch[1];
                 const iterable = forMatch[2];
-                const body: BmlInstruction[] = [];
+                // Collect all lines inside the block, handling nested braces
+                const bodyLines: string[] = [];
                 i++;
-                while (i < lines.length && !lines[i].includes('}')) {
-                    const inner = parseRunBlock([lines[i]]);
-                    body.push(...inner.instructions);
+                let braceCount = 1;
+                while (i < lines.length && braceCount > 0) {
+                    if (lines[i].includes('{')) braceCount++;
+                    if (lines[i].includes('}')) braceCount--;
+                    if (braceCount > 0) bodyLines.push(lines[i]);
                     i++;
                 }
+                const body = parseRunBlock(bodyLines).instructions;
                 instructions.push({ type: 'for', variable, iterable, body });
-                i++; // skip closing }
-                continue;
-            }
-        }
-        // if/else
-        if (line.startsWith('if:')) {
-            const ifMatch = line.match(/^if:\s*(.+)\s*\{/);
-            if (ifMatch) {
-                const condition = ifMatch[1];
-                const then: BmlInstruction[] = [];
-                i++;
-                while (i < lines.length && !lines[i].includes('}')) {
-                    const inner = parseRunBlock([lines[i]]);
-                    then.push(...inner.instructions);
-                    i++;
-                }
-                i++; // skip closing }
-                let elseBlock: BmlInstruction[] | undefined = undefined;
-                if (i < lines.length && lines[i].startsWith('else')) {
-                    i++; // skip 'else {'
-                    elseBlock = [];
-                    while (i < lines.length && !lines[i].includes('}')) {
-                        const inner = parseRunBlock([lines[i]]);
-                        elseBlock.push(...inner.instructions);
-                        i++;
-                    }
-                    i++; // skip closing }
-                }
-                instructions.push({ type: 'if', condition, then, else: elseBlock });
                 continue;
             }
         }
@@ -223,6 +297,8 @@ function parseRunBlock(lines: string[]): BmlRunBlock {
         // Unknown line: skip
         i++;
     }
+    return { instructions };
+    // ...existing code...
     return { instructions };
 }
 

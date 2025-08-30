@@ -1,0 +1,4 @@
+module "demo" {
+version 1.0
+run { log: "Hello" }
+}

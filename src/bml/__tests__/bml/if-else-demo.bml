@@ -1,0 +1,10 @@
+module "demo" {
+    run {
+        set: flag:bool = true
+        if: flag {
+            log: "Flag is true"
+        } else {
+            log: "Flag is false"
+        }
+    }
+}

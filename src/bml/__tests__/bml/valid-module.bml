@@ -1,0 +1,9 @@
+module "demo" {
+version: 1.0
+author: "Renan"
+tags: ["cli","test"]
+run {
+set: name:string = "Brylo"
+log: "Hello, ${name}!"
+}
+}

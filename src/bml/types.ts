@@ -39,6 +39,7 @@ export interface BmlSet {
     type: 'set';
     variable: string;
     value: BmlValue;
+    valueType: 'string' | 'number' | 'bool' | 'object' | 'list';
 }
 
 export interface BmlIf {

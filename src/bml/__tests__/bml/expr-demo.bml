@@ -1,0 +1,12 @@
+module "expr-test" {
+    version: 1.0
+    author: "Test"
+    run {
+        set: x:number = 5
+        if: x > 3 {
+            log: "x is big"
+        } else {
+            log: "x is small"
+        }
+    }
+}

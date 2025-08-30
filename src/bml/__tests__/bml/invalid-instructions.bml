@@ -1,0 +1,10 @@
+module "demo" {
+    version: "1.0"
+    run {
+        set: badVarName:string = "bad"
+        set: nonExistentList:list = ["a", "b"]
+        for: x in notalist {
+            log: "Should not run"
+        }
+    }
+}
