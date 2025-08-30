@@ -1,0 +1,11 @@
+module "if-gte-test" {
+    version: 1.0
+    run {
+        set: x:number = 3
+        if: x >= 3 {
+            log: "x is greater or equal to three"
+        } else {
+            log: "x is less than three"
+        }
+    }
+}

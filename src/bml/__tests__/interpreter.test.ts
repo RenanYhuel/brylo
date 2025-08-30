@@ -66,4 +66,46 @@ describe('BML Interpreter', () => {
         expect(obj.a).toBe(1);
         expect(obj.b).toBe(true);
     });
+    it('should execute if with == expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-eq-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is five');
+        expect(ctx.logs).not.toContain('x is not five');
+    });
+    it('should execute if with != expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-neq-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is not three');
+        expect(ctx.logs).not.toContain('x is three');
+    });
+    it('should execute if with < expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-lt-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is less than three');
+        expect(ctx.logs).not.toContain('x is not less than three');
+    });
+    it('should execute if with > expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-gt-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is greater than three');
+        expect(ctx.logs).not.toContain('x is not greater than three');
+    });
+    it('should execute if with >= expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-gte-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is greater or equal to three');
+        expect(ctx.logs).not.toContain('x is less than three');
+    });
+    it('should execute if with <= expression', () => {
+        const source = fs.readFileSync(path.join(__dirname, 'bml', 'if-lte-demo.bml'), 'utf8');
+        const ast = parseBml(source);
+        const ctx = executeModule(ast);
+        expect(ctx.logs).toContain('x is less or equal to three');
+        expect(ctx.logs).not.toContain('x is greater than three');
+    });
 });

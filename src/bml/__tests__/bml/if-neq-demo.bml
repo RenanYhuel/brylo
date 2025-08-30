@@ -1,0 +1,11 @@
+module "if-neq-test" {
+    version: 1.0
+    run {
+        set: x:number = 5
+        if: x != 3 {
+            log: "x is not three"
+        } else {
+            log: "x is three"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+module "if-lt-test" {
+    version: 1.0
+    run {
+        set: x:number = 2
+        if: x < 3 {
+            log: "x is less than three"
+        } else {
+            log: "x is not less than three"
+        }
+    }
+}
