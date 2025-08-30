@@ -1,4 +1,9 @@
 npx --no-install commitlint --edit "$1"
+
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npx --no-install commitlint --edit "$1"
 if [ $? -ne 0 ]; then
 	echo "Commit message does not follow Conventional Commits or exceeds header length."
 	exit 1
