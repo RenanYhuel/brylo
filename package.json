@@ -32,7 +32,7 @@
     "devDependencies": {
         "@commitlint/cli": "^19.0.0",
         "@commitlint/config-conventional": "^19.0.0",
-        "@eslint/js": "^9.34.0",
+        "@eslint/js": "^9.37.0",
         "@semantic-release/changelog": "^6.0.3",
         "@semantic-release/git": "^10.0.1",
         "@types/commander": "^2.12.0",
